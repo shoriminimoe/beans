@@ -3,22 +3,26 @@ package com.example.beans.parser
 import com.example.beans.model.Amount
 import com.example.beans.model.Posting
 import com.example.beans.model.Transaction
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 
 class BeancountParserTest {
-
     private val parser = BeancountParser()
 
     @Test
     fun `parse single transaction with two postings`() {
-        val input = """
+        val input =
+            """
             2024-01-15 * "Grocery Store" "Weekly groceries"
               Expenses:Food:Groceries  45.50 USD
               Assets:Bank:Checking
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         val txns = file.transactions
@@ -41,11 +45,12 @@ class BeancountParserTest {
 
     @Test
     fun `parse transaction with narration only (no payee)`() {
-        val input = """
+        val input =
+            """
             2024-02-01 * "Bank transfer"
               Assets:Bank:Savings  500.00 USD
               Assets:Bank:Checking
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         val txn = file.transactions[0]
@@ -55,11 +60,12 @@ class BeancountParserTest {
 
     @Test
     fun `parse transaction with pending flag`() {
-        val input = """
+        val input =
+            """
             2024-03-01 ! "Store" "Pending purchase"
               Expenses:Misc  10.00 EUR
               Liabilities:CreditCard
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         assertEquals("!", file.transactions[0].flag)
@@ -67,7 +73,8 @@ class BeancountParserTest {
 
     @Test
     fun `parse multiple transactions`() {
-        val input = """
+        val input =
+            """
             2024-01-01 * "Store A" "Groceries"
               Expenses:Food  20.00 USD
               Assets:Cash
@@ -75,7 +82,7 @@ class BeancountParserTest {
             2024-01-02 * "Store B" "Coffee"
               Expenses:Food:Coffee  5.00 USD
               Assets:Cash
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         assertEquals(2, file.transactions.size)
@@ -85,14 +92,15 @@ class BeancountParserTest {
 
     @Test
     fun `parse preserves comments and directives`() {
-        val input = """
+        val input =
+            """
             ; This is a comment
             option "operating_currency" "USD"
 
             2024-01-01 * "Store" "Stuff"
               Expenses:Misc  10.00 USD
               Assets:Cash
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         assertEquals(1, file.transactions.size)
@@ -102,11 +110,12 @@ class BeancountParserTest {
 
     @Test
     fun `parse negative amount`() {
-        val input = """
+        val input =
+            """
             2024-01-15 * "Refund" "Got money back"
               Expenses:Food  -20.00 USD
               Assets:Bank:Checking
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         val posting = file.transactions[0].postings[0]
@@ -115,11 +124,12 @@ class BeancountParserTest {
 
     @Test
     fun `parse posting with both amounts explicit`() {
-        val input = """
+        val input =
+            """
             2024-01-15 * "Transfer" "Move money"
               Assets:Bank:Savings  500.00 USD
               Assets:Bank:Checking  -500.00 USD
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         val txn = file.transactions[0]
@@ -130,16 +140,18 @@ class BeancountParserTest {
 
     @Test
     fun `serialize single transaction`() {
-        val txn = Transaction(
-            date = LocalDate.of(2024, 1, 15),
-            flag = "*",
-            payee = "Grocery Store",
-            narration = "Weekly groceries",
-            postings = listOf(
-                Posting("Expenses:Food:Groceries", Amount(BigDecimal("45.50"), "USD")),
-                Posting("Assets:Bank:Checking", null)
+        val txn =
+            Transaction(
+                date = LocalDate.of(2024, 1, 15),
+                flag = "*",
+                payee = "Grocery Store",
+                narration = "Weekly groceries",
+                postings =
+                    listOf(
+                        Posting("Expenses:Food:Groceries", Amount(BigDecimal("45.50"), "USD")),
+                        Posting("Assets:Bank:Checking", null),
+                    ),
             )
-        )
         val file = BeancountFile(listOf(TransactionEntry(txn)))
         val output = parser.serialize(file)
 
@@ -150,16 +162,18 @@ class BeancountParserTest {
 
     @Test
     fun `serialize transaction with narration only`() {
-        val txn = Transaction(
-            date = LocalDate.of(2024, 1, 1),
-            flag = "*",
-            payee = "",
-            narration = "Transfer",
-            postings = listOf(
-                Posting("Assets:A", Amount(BigDecimal("100.00"), "USD")),
-                Posting("Assets:B", null)
+        val txn =
+            Transaction(
+                date = LocalDate.of(2024, 1, 1),
+                flag = "*",
+                payee = "",
+                narration = "Transfer",
+                postings =
+                    listOf(
+                        Posting("Assets:A", Amount(BigDecimal("100.00"), "USD")),
+                        Posting("Assets:B", null),
+                    ),
             )
-        )
         val file = BeancountFile(listOf(TransactionEntry(txn)))
         val output = parser.serialize(file)
 
@@ -169,7 +183,8 @@ class BeancountParserTest {
 
     @Test
     fun `round-trip preserves content`() {
-        val input = """
+        val input =
+            """
             ; My ledger
             option "operating_currency" "USD"
 
@@ -180,7 +195,7 @@ class BeancountParserTest {
             2024-01-02 * "Coffee Shop" "Latte"
               Expenses:Food:Coffee  5.00 USD
               Assets:Cash
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         val output = parser.serialize(file)
@@ -206,10 +221,11 @@ class BeancountParserTest {
 
     @Test
     fun `parse file with only comments`() {
-        val input = """
+        val input =
+            """
             ; Comment line 1
             ; Comment line 2
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         assertTrue(file.transactions.isEmpty())
@@ -218,11 +234,12 @@ class BeancountParserTest {
 
     @Test
     fun `parse transaction with multiple currencies`() {
-        val input = """
+        val input =
+            """
             2024-06-01 * "Exchange" "Buy euros"
               Assets:EUR  100.00 EUR
               Assets:USD  -110.00 USD
-        """.trimIndent()
+            """.trimIndent()
 
         val file = parser.parse(input)
         val txn = file.transactions[0]

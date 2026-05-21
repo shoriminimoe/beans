@@ -6,8 +6,9 @@ import com.example.beans.parser.BeancountParser
 import com.example.beans.parser.TransactionEntry
 import java.io.File
 
-class BeancountRepository(private val parser: BeancountParser) {
-
+class BeancountRepository(
+    private val parser: BeancountParser,
+) {
     private var file: File? = null
     private var syncTarget: File? = null
     private var beancountFile: BeancountFile = BeancountFile(emptyList())
@@ -18,7 +19,10 @@ class BeancountRepository(private val parser: BeancountParser) {
         beancountFile = parser.parse(content)
     }
 
-    fun loadFromContent(content: String, localFile: File) {
+    fun loadFromContent(
+        content: String,
+        localFile: File,
+    ) {
         this.file = localFile
         beancountFile = parser.parse(content)
     }
@@ -27,13 +31,9 @@ class BeancountRepository(private val parser: BeancountParser) {
         this.syncTarget = target
     }
 
-    fun getTransactions(): List<Transaction> {
-        return beancountFile.transactions
-    }
+    fun getTransactions(): List<Transaction> = beancountFile.transactions
 
-    fun getTransactionById(id: String): Transaction? {
-        return beancountFile.transactions.find { it.id == id }
-    }
+    fun getTransactionById(id: String): Transaction? = beancountFile.transactions.find { it.id == id }
 
     fun addTransaction(transaction: Transaction) {
         val newEntries = beancountFile.entries + TransactionEntry(transaction)
@@ -41,20 +41,22 @@ class BeancountRepository(private val parser: BeancountParser) {
     }
 
     fun updateTransaction(transaction: Transaction) {
-        val newEntries = beancountFile.entries.map { entry ->
-            if (entry is TransactionEntry && entry.transaction.id == transaction.id) {
-                TransactionEntry(transaction, entry.lineNumber)
-            } else {
-                entry
+        val newEntries =
+            beancountFile.entries.map { entry ->
+                if (entry is TransactionEntry && entry.transaction.id == transaction.id) {
+                    TransactionEntry(transaction, entry.lineNumber)
+                } else {
+                    entry
+                }
             }
-        }
         beancountFile = BeancountFile(newEntries)
     }
 
     fun deleteTransaction(id: String) {
-        val newEntries = beancountFile.entries.filter { entry ->
-            !(entry is TransactionEntry && entry.transaction.id == id)
-        }
+        val newEntries =
+            beancountFile.entries.filter { entry ->
+                !(entry is TransactionEntry && entry.transaction.id == id)
+            }
         beancountFile = BeancountFile(newEntries)
     }
 
@@ -67,13 +69,15 @@ class BeancountRepository(private val parser: BeancountParser) {
 
     fun getBeancountFile(): BeancountFile = beancountFile
 
-    fun getAllAccounts(): Set<String> {
-        return beancountFile.transactions.flatMap { txn ->
-            txn.postings.map { it.account }
-        }.toSet()
-    }
+    fun getAllAccounts(): Set<String> =
+        beancountFile.transactions
+            .flatMap { txn ->
+                txn.postings.map { it.account }
+            }.toSet()
 
-    fun getAllPayees(): Set<String> {
-        return beancountFile.transactions.map { it.payee }.filter { it.isNotEmpty() }.toSet()
-    }
+    fun getAllPayees(): Set<String> =
+        beancountFile.transactions
+            .map { it.payee }
+            .filter { it.isNotEmpty() }
+            .toSet()
 }

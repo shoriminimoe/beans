@@ -12,32 +12,36 @@ sealed class BeancountEntry {
 
 data class TransactionEntry(
     val transaction: Transaction,
-    override val lineNumber: Int = 0
+    override val lineNumber: Int = 0,
 ) : BeancountEntry()
 
 data class RawDirective(
     val text: String,
-    override val lineNumber: Int = 0
+    override val lineNumber: Int = 0,
 ) : BeancountEntry()
 
-data class BeancountFile(val entries: List<BeancountEntry>) {
+data class BeancountFile(
+    val entries: List<BeancountEntry>,
+) {
     val transactions: List<Transaction>
         get() = entries.filterIsInstance<TransactionEntry>().map { it.transaction }
 }
 
 class BeancountParser {
+    private val txnHeaderRegex =
+        Regex(
+            """^(\d{4}-\d{2}-\d{2})\s+([*!])\s+(?:"([^"]*)"\s+)?"([^"]*)"$""",
+        )
 
-    private val txnHeaderRegex = Regex(
-        """^(\d{4}-\d{2}-\d{2})\s+([*!])\s+(?:"([^"]*)"\s+)?"([^"]*)"$"""
-    )
+    private val postingWithAmountRegex =
+        Regex(
+            """^\s{2,}(\S[\w:]+(?::\w[\w-]*)*)\s{2,}(-?[\d,]+\.?\d*)\s+([A-Z][A-Z0-9_-]*)$""",
+        )
 
-    private val postingWithAmountRegex = Regex(
-        """^\s{2,}(\S[\w:]+(?::\w[\w-]*)*)\s{2,}(-?[\d,]+\.?\d*)\s+([A-Z][A-Z0-9_-]*)$"""
-    )
-
-    private val postingNoAmountRegex = Regex(
-        """^\s{2,}(\S[\w:]+(?::\w[\w-]*)*)$"""
-    )
+    private val postingNoAmountRegex =
+        Regex(
+            """^\s{2,}(\S[\w:]+(?::\w[\w-]*)*)$""",
+        )
 
     fun parse(text: String): BeancountFile {
         if (text.isBlank()) return BeancountFile(emptyList())
@@ -82,8 +86,8 @@ class BeancountParser {
                 entries.add(
                     TransactionEntry(
                         Transaction(date, flag, payee, narration, postings),
-                        lineNumber = i
-                    )
+                        lineNumber = i,
+                    ),
                 )
             } else if (line.isNotBlank()) {
                 entries.add(RawDirective(line, lineNumber = i))
@@ -104,16 +108,17 @@ class BeancountParser {
                 is RawDirective -> sb.appendLine(entry.text)
                 is TransactionEntry -> {
                     val txn = entry.transaction
-                    val header = buildString {
-                        append(txn.date)
-                        append(" ")
-                        append(txn.flag)
-                        append(" ")
-                        if (txn.payee.isNotEmpty()) {
-                            append("\"${txn.payee}\" ")
+                    val header =
+                        buildString {
+                            append(txn.date)
+                            append(" ")
+                            append(txn.flag)
+                            append(" ")
+                            if (txn.payee.isNotEmpty()) {
+                                append("\"${txn.payee}\" ")
+                            }
+                            append("\"${txn.narration}\"")
                         }
-                        append("\"${txn.narration}\"")
-                    }
                     sb.appendLine(header)
 
                     for (posting in txn.postings) {

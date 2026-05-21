@@ -6,12 +6,12 @@ import java.util.UUID
 
 data class Amount(
     val value: BigDecimal,
-    val currency: String
+    val currency: String,
 )
 
 data class Posting(
     val account: String,
-    val amount: Amount?
+    val amount: Amount?,
 )
 
 data class Transaction(
@@ -20,5 +20,5 @@ data class Transaction(
     val payee: String,
     val narration: String,
     val postings: List<Posting>,
-    val id: String = UUID.randomUUID().toString()
+    val id: String = UUID.randomUUID().toString(),
 )

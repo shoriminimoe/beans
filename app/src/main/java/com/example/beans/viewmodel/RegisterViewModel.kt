@@ -9,9 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class RegisterViewModel(
     private val repository: BeancountRepository,
-    private val calculator: BalanceCalculator
+    private val calculator: BalanceCalculator,
 ) {
-
     private val _accounts = MutableStateFlow<List<String>>(emptyList())
     val accounts: StateFlow<List<String>> = _accounts.asStateFlow()
 

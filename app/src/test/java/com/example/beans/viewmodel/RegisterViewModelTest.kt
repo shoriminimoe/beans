@@ -1,28 +1,30 @@
 package com.example.beans.viewmodel
 
 import com.example.beans.calculator.BalanceCalculator
+import com.example.beans.model.Amount
+import com.example.beans.model.Posting
+import com.example.beans.model.Transaction
 import com.example.beans.parser.BeancountParser
 import com.example.beans.repository.BeancountRepository
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import com.example.beans.model.Amount
-import com.example.beans.model.Posting
-import com.example.beans.model.Transaction
 import java.math.BigDecimal
 import java.time.LocalDate
 
 class RegisterViewModelTest {
-
     @get:Rule
     val tempFolder = TemporaryFolder()
 
     private lateinit var repository: BeancountRepository
     private lateinit var viewModel: RegisterViewModel
 
-    private val sampleContent = """
+    private val sampleContent =
+        """
         2024-01-01 * "Opening" "Initial balance"
           Assets:Bank:Checking  1000.00 USD
           Equity:Opening
@@ -34,7 +36,7 @@ class RegisterViewModelTest {
         2024-01-03 * "Salary" "Paycheck"
           Assets:Bank:Checking  3000.00 USD
           Income:Salary
-    """.trimIndent()
+        """.trimIndent()
 
     @Before
     fun setUp() {
@@ -98,11 +100,12 @@ class RegisterViewModelTest {
                 flag = "*",
                 payee = "Extra",
                 narration = "Extra deposit",
-                postings = listOf(
-                    Posting("Assets:Bank:Checking", Amount(BigDecimal("10.00"), "USD")),
-                    Posting("Income:Salary", null)
-                )
-            )
+                postings =
+                    listOf(
+                        Posting("Assets:Bank:Checking", Amount(BigDecimal("10.00"), "USD")),
+                        Posting("Income:Salary", null),
+                    ),
+            ),
         )
 
         viewModel.loadAccounts()

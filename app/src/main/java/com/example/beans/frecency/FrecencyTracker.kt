@@ -11,13 +11,15 @@ import android.content.SharedPreferences
  */
 class FrecencyTracker(
     private val prefs: SharedPreferences,
-    private val clock: () -> Long = { System.currentTimeMillis() }
+    private val clock: () -> Long = { System.currentTimeMillis() },
 ) {
-
     private val payeeData: MutableMap<String, FrecencyEntry> = loadData(KEY_PAYEES)
     private val accountData: MutableMap<String, FrecencyEntry> = loadData(KEY_ACCOUNTS)
 
-    data class FrecencyEntry(val count: Int, val lastUsed: Long)
+    data class FrecencyEntry(
+        val count: Int,
+        val lastUsed: Long,
+    )
 
     fun recordPayee(payee: String) {
         record(payeeData, payee)
@@ -29,13 +31,9 @@ class FrecencyTracker(
         saveData(KEY_ACCOUNTS, accountData)
     }
 
-    fun suggestPayees(prefix: String): List<String> {
-        return suggest(payeeData, prefix)
-    }
+    fun suggestPayees(prefix: String): List<String> = suggest(payeeData, prefix)
 
-    fun suggestAccounts(prefix: String): List<String> {
-        return suggest(accountData, prefix)
-    }
+    fun suggestAccounts(prefix: String): List<String> = suggest(accountData, prefix)
 
     /**
      * Returns account completions incrementally by delimiter.
@@ -49,10 +47,14 @@ class FrecencyTracker(
         val depth = if (prefix.isEmpty()) 0 else prefix.count { it == ':' }
         val targetSegments = depth + 1
 
-        val matchingAccounts = accountData.keys.filter { account ->
-            if (prefix.isEmpty()) true
-            else account.startsWith(prefix)
-        }
+        val matchingAccounts =
+            accountData.keys.filter { account ->
+                if (prefix.isEmpty()) {
+                    true
+                } else {
+                    account.startsWith(prefix)
+                }
+            }
 
         // Group by truncated-to-target-depth prefix, keep best score per group
         val groups = mutableMapOf<String, Double>()
@@ -67,21 +69,28 @@ class FrecencyTracker(
         return groups.entries.sortedByDescending { it.value }.map { it.key }
     }
 
-    private fun record(data: MutableMap<String, FrecencyEntry>, key: String) {
+    private fun record(
+        data: MutableMap<String, FrecencyEntry>,
+        key: String,
+    ) {
         val existing = data[key]
         val count = (existing?.count ?: 0) + 1
         data[key] = FrecencyEntry(count, clock())
     }
 
-    private fun suggest(data: Map<String, FrecencyEntry>, prefix: String): List<String> {
-        return data.entries
+    private fun suggest(
+        data: Map<String, FrecencyEntry>,
+        prefix: String,
+    ): List<String> =
+        data.entries
             .filter { (key, _) ->
-                if (prefix.isEmpty()) true
-                else key.startsWith(prefix, ignoreCase = true)
-            }
-            .sortedByDescending { (_, entry) -> score(entry) }
+                if (prefix.isEmpty()) {
+                    true
+                } else {
+                    key.startsWith(prefix, ignoreCase = true)
+                }
+            }.sortedByDescending { (_, entry) -> score(entry) }
             .map { it.key }
-    }
 
     private fun score(entry: FrecencyEntry): Double {
         val age = (clock() - entry.lastUsed).coerceAtLeast(0)
@@ -110,10 +119,19 @@ class FrecencyTracker(
         return map
     }
 
-    private fun saveData(key: String, data: Map<String, FrecencyEntry>) {
+    private fun saveData(
+        key: String,
+        data: Map<String, FrecencyEntry>,
+    ) {
         val sb = StringBuilder()
         for ((k, v) in data) {
-            sb.append(k).append('\t').append(v.count).append('\t').append(v.lastUsed).append('\n')
+            sb
+                .append(k)
+                .append('\t')
+                .append(v.count)
+                .append('\t')
+                .append(v.lastUsed)
+                .append('\n')
         }
         prefs.edit().putString(key, sb.toString()).apply()
     }

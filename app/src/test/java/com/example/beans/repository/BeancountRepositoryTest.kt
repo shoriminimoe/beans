@@ -4,7 +4,11 @@ import com.example.beans.model.Amount
 import com.example.beans.model.Posting
 import com.example.beans.model.Transaction
 import com.example.beans.parser.BeancountParser
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -13,13 +17,13 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 class BeancountRepositoryTest {
-
     @get:Rule
     val tempFolder = TemporaryFolder()
 
     private lateinit var repository: BeancountRepository
 
-    private val sampleContent = """
+    private val sampleContent =
+        """
         ; My ledger
         option "operating_currency" "USD"
 
@@ -30,7 +34,7 @@ class BeancountRepositoryTest {
         2024-01-02 * "Coffee Shop" "Latte"
           Expenses:Food:Coffee  5.00 USD
           Assets:Cash
-    """.trimIndent()
+        """.trimIndent()
 
     @Before
     fun setUp() {
@@ -56,16 +60,18 @@ class BeancountRepositoryTest {
         file.writeText(sampleContent)
         repository.loadFile(file)
 
-        val newTxn = Transaction(
-            date = LocalDate.of(2024, 1, 3),
-            flag = "*",
-            payee = "Restaurant",
-            narration = "Dinner",
-            postings = listOf(
-                Posting("Expenses:Food:Dining", Amount(BigDecimal("35.00"), "USD")),
-                Posting("Assets:Cash", null)
+        val newTxn =
+            Transaction(
+                date = LocalDate.of(2024, 1, 3),
+                flag = "*",
+                payee = "Restaurant",
+                narration = "Dinner",
+                postings =
+                    listOf(
+                        Posting("Expenses:Food:Dining", Amount(BigDecimal("35.00"), "USD")),
+                        Posting("Assets:Cash", null),
+                    ),
             )
-        )
 
         repository.addTransaction(newTxn)
         val transactions = repository.getTransactions()
@@ -80,16 +86,18 @@ class BeancountRepositoryTest {
         file.writeText(sampleContent)
         repository.loadFile(file)
 
-        val newTxn = Transaction(
-            date = LocalDate.of(2024, 1, 3),
-            flag = "*",
-            payee = "New Place",
-            narration = "New thing",
-            postings = listOf(
-                Posting("Expenses:Misc", Amount(BigDecimal("10.00"), "USD")),
-                Posting("Assets:Cash", null)
+        val newTxn =
+            Transaction(
+                date = LocalDate.of(2024, 1, 3),
+                flag = "*",
+                payee = "New Place",
+                narration = "New thing",
+                postings =
+                    listOf(
+                        Posting("Expenses:Misc", Amount(BigDecimal("10.00"), "USD")),
+                        Posting("Assets:Cash", null),
+                    ),
             )
-        )
 
         repository.addTransaction(newTxn)
         repository.save()

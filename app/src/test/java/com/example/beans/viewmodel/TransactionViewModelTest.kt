@@ -13,7 +13,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -23,7 +24,6 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TransactionViewModelTest {
-
     @get:Rule
     val tempFolder = TemporaryFolder()
 
@@ -31,7 +31,8 @@ class TransactionViewModelTest {
     private lateinit var repository: BeancountRepository
     private lateinit var viewModel: TransactionViewModel
 
-    private val sampleContent = """
+    private val sampleContent =
+        """
         2024-01-01 * "Store A" "Groceries"
           Expenses:Food  20.00 USD
           Assets:Cash
@@ -39,7 +40,7 @@ class TransactionViewModelTest {
         2024-01-02 * "Coffee Shop" "Latte"
           Expenses:Food:Coffee  5.00 USD
           Assets:Cash
-    """.trimIndent()
+        """.trimIndent()
 
     @Before
     fun setUp() {
@@ -57,87 +58,96 @@ class TransactionViewModelTest {
     }
 
     @Test
-    fun `initial state has transactions from repository`() = runTest(testDispatcher) {
-        viewModel.loadTransactions()
-        advanceUntilIdle()
+    fun `initial state has transactions from repository`() =
+        runTest(testDispatcher) {
+            viewModel.loadTransactions()
+            advanceUntilIdle()
 
-        val transactions = viewModel.transactions.value
-        assertEquals(2, transactions.size)
-        assertEquals("Store A", transactions[0].payee)
-    }
-
-    @Test
-    fun `add transaction updates state`() = runTest(testDispatcher) {
-        viewModel.loadTransactions()
-        advanceUntilIdle()
-
-        val newTxn = Transaction(
-            date = LocalDate.of(2024, 1, 3),
-            flag = "*",
-            payee = "New Place",
-            narration = "Dinner",
-            postings = listOf(
-                Posting("Expenses:Food", Amount(BigDecimal("25.00"), "USD")),
-                Posting("Assets:Cash", null)
-            )
-        )
-
-        viewModel.addTransaction(newTxn)
-        advanceUntilIdle()
-
-        assertEquals(3, viewModel.transactions.value.size)
-    }
+            val transactions = viewModel.transactions.value
+            assertEquals(2, transactions.size)
+            assertEquals("Store A", transactions[0].payee)
+        }
 
     @Test
-    fun `update transaction updates state`() = runTest(testDispatcher) {
-        viewModel.loadTransactions()
-        advanceUntilIdle()
+    fun `add transaction updates state`() =
+        runTest(testDispatcher) {
+            viewModel.loadTransactions()
+            advanceUntilIdle()
 
-        val existing = viewModel.transactions.value[0]
-        val updated = existing.copy(narration = "Updated")
+            val newTxn =
+                Transaction(
+                    date = LocalDate.of(2024, 1, 3),
+                    flag = "*",
+                    payee = "New Place",
+                    narration = "Dinner",
+                    postings =
+                        listOf(
+                            Posting("Expenses:Food", Amount(BigDecimal("25.00"), "USD")),
+                            Posting("Assets:Cash", null),
+                        ),
+                )
 
-        viewModel.updateTransaction(updated)
-        advanceUntilIdle()
+            viewModel.addTransaction(newTxn)
+            advanceUntilIdle()
 
-        assertEquals("Updated", viewModel.transactions.value[0].narration)
-    }
-
-    @Test
-    fun `delete transaction updates state`() = runTest(testDispatcher) {
-        viewModel.loadTransactions()
-        advanceUntilIdle()
-
-        val toDelete = viewModel.transactions.value[0]
-        viewModel.deleteTransaction(toDelete.id)
-        advanceUntilIdle()
-
-        assertEquals(1, viewModel.transactions.value.size)
-        assertEquals("Coffee Shop", viewModel.transactions.value[0].payee)
-    }
+            assertEquals(3, viewModel.transactions.value.size)
+        }
 
     @Test
-    fun `save persists changes`() = runTest(testDispatcher) {
-        viewModel.loadTransactions()
-        advanceUntilIdle()
+    fun `update transaction updates state`() =
+        runTest(testDispatcher) {
+            viewModel.loadTransactions()
+            advanceUntilIdle()
 
-        val newTxn = Transaction(
-            date = LocalDate.of(2024, 1, 3),
-            flag = "*",
-            payee = "Saved Place",
-            narration = "Persisted",
-            postings = listOf(
-                Posting("Expenses:Misc", Amount(BigDecimal("10.00"), "USD")),
-                Posting("Assets:Cash", null)
-            )
-        )
+            val existing = viewModel.transactions.value[0]
+            val updated = existing.copy(narration = "Updated")
 
-        viewModel.addTransaction(newTxn)
-        viewModel.save()
-        advanceUntilIdle()
+            viewModel.updateTransaction(updated)
+            advanceUntilIdle()
 
-        // Reload from file
-        val file = tempFolder.root.listFiles()!!.first()
-        val content = file.readText()
-        assertTrue(content.contains("Saved Place"))
-    }
+            assertEquals("Updated", viewModel.transactions.value[0].narration)
+        }
+
+    @Test
+    fun `delete transaction updates state`() =
+        runTest(testDispatcher) {
+            viewModel.loadTransactions()
+            advanceUntilIdle()
+
+            val toDelete = viewModel.transactions.value[0]
+            viewModel.deleteTransaction(toDelete.id)
+            advanceUntilIdle()
+
+            assertEquals(1, viewModel.transactions.value.size)
+            assertEquals("Coffee Shop", viewModel.transactions.value[0].payee)
+        }
+
+    @Test
+    fun `save persists changes`() =
+        runTest(testDispatcher) {
+            viewModel.loadTransactions()
+            advanceUntilIdle()
+
+            val newTxn =
+                Transaction(
+                    date = LocalDate.of(2024, 1, 3),
+                    flag = "*",
+                    payee = "Saved Place",
+                    narration = "Persisted",
+                    postings =
+                        listOf(
+                            Posting("Expenses:Misc", Amount(BigDecimal("10.00"), "USD")),
+                            Posting("Assets:Cash", null),
+                        ),
+                )
+
+            viewModel.addTransaction(newTxn)
+            viewModel.save()
+            advanceUntilIdle()
+
+            // Reload from file
+            val file = tempFolder.root.listFiles()!!.first()
+            val content = file.readText()
+            assertTrue(content.contains("Saved Place"))
+        }
 }

@@ -222,6 +222,16 @@ fun BeansApp(
                         transactionViewModel.addTransaction(duplicate)
                         saveToSource()
                     },
+                    onSwitchLedger = {
+                        // Every mutation already triggers saveToSource(), so
+                        // switching ledgers introduces no new unsaved-data risk.
+                        // Reset per-ledger UI state so nothing from the current
+                        // ledger leaks into the next one.
+                        editingTransaction = null
+                        sourceUri = null
+                        registerViewModel.reset()
+                        fileLoaded = false
+                    },
                 )
             }
 

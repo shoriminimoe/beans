@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -56,6 +57,7 @@ fun TransactionListScreen(
     onBalanceSheetClick: () -> Unit,
     onRegisterClick: () -> Unit,
     onDuplicateClick: (Transaction) -> Unit,
+    onSwitchLedger: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -64,6 +66,9 @@ fun TransactionListScreen(
             TopAppBar(
                 title = { Text("Beans") },
                 actions = {
+                    IconButton(onClick = onSwitchLedger) {
+                        Icon(Icons.Default.FolderOpen, contentDescription = "Switch ledger")
+                    }
                     IconButton(onClick = onRegisterClick) {
                         Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Register")
                     }

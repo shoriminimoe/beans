@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -32,6 +33,7 @@ fun TransactionListScreen(
     onTransactionClick: (Transaction) -> Unit,
     onDeleteClick: (Transaction) -> Unit,
     onBalanceSheetClick: () -> Unit,
+    onRegisterClick: () -> Unit,
     onDuplicateClick: (Transaction) -> Unit
 ) {
     Scaffold(
@@ -39,6 +41,9 @@ fun TransactionListScreen(
             TopAppBar(
                 title = { Text("Beans") },
                 actions = {
+                    IconButton(onClick = onRegisterClick) {
+                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Register")
+                    }
                     IconButton(onClick = onBalanceSheetClick) {
                         Icon(Icons.Default.AccountBalance, contentDescription = "Balance Sheet")
                     }

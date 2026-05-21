@@ -29,6 +29,7 @@ import com.example.beans.parser.BeancountParser
 import com.example.beans.repository.BeancountRepository
 import com.example.beans.ui.theme.BeansTheme
 import com.example.beans.viewmodel.BalanceSheetViewModel
+import com.example.beans.viewmodel.RegisterViewModel
 import com.example.beans.viewmodel.TransactionViewModel
 import java.io.File
 
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
         val calculator = BalanceCalculator()
         val transactionViewModel = TransactionViewModel(repository)
         val balanceSheetViewModel = BalanceSheetViewModel(repository, calculator)
+        val registerViewModel = RegisterViewModel(repository, calculator)
         val prefs = getSharedPreferences("beans_prefs", Context.MODE_PRIVATE)
         val frecencyTracker = FrecencyTracker(prefs)
 
@@ -50,6 +52,7 @@ class MainActivity : ComponentActivity() {
                     repository = repository,
                     transactionViewModel = transactionViewModel,
                     balanceSheetViewModel = balanceSheetViewModel,
+                    registerViewModel = registerViewModel,
                     prefs = prefs,
                     frecencyTracker = frecencyTracker
                 )
@@ -63,6 +66,7 @@ fun BeansApp(
     repository: BeancountRepository,
     transactionViewModel: TransactionViewModel,
     balanceSheetViewModel: BalanceSheetViewModel,
+    registerViewModel: RegisterViewModel,
     prefs: SharedPreferences,
     frecencyTracker: FrecencyTracker
 ) {
@@ -181,6 +185,10 @@ fun BeansApp(
                         balanceSheetViewModel.computeBalances()
                         navController.navigate("balanceSheet")
                     },
+                    onRegisterClick = {
+                        registerViewModel.loadAccounts()
+                        navController.navigate("register")
+                    },
                     onDuplicateClick = { txn ->
                         val duplicate = txn.copy(id = java.util.UUID.randomUUID().toString())
                         transactionViewModel.addTransaction(duplicate)
@@ -223,6 +231,19 @@ fun BeansApp(
                 val grouped by balanceSheetViewModel.groupedBalances.collectAsState()
                 BalanceSheetScreen(
                     groupedBalances = grouped,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("register") {
+                val accounts by registerViewModel.accounts.collectAsState()
+                val selectedAccount by registerViewModel.selectedAccount.collectAsState()
+                val entries by registerViewModel.entries.collectAsState()
+                RegisterScreen(
+                    accounts = accounts,
+                    selectedAccount = selectedAccount,
+                    entries = entries,
+                    onAccountSelected = { registerViewModel.selectAccount(it) },
                     onBack = { navController.popBackStack() }
                 )
             }

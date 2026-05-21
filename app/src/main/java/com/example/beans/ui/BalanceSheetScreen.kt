@@ -125,7 +125,7 @@ private fun AccountBalanceRow(
 }
 
 @Composable
-private fun balanceColor(amount: BigDecimal): androidx.compose.ui.graphics.Color {
+fun balanceColor(amount: BigDecimal): androidx.compose.ui.graphics.Color {
     return when {
         amount > BigDecimal.ZERO -> MaterialTheme.colorScheme.primary
         amount < BigDecimal.ZERO -> MaterialTheme.colorScheme.error

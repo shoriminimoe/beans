@@ -1,5 +1,6 @@
 package com.example.beans.calculator
 
+import com.example.beans.model.RegisterEntry
 import com.example.beans.model.Transaction
 import java.math.BigDecimal
 
@@ -55,6 +56,72 @@ class BalanceCalculator {
         }.mapValues { (_, entries) ->
             entries.associate { it.key to it.value }
         }
+    }
+
+    /**
+     * Build a register for [account]: every transaction touching that account
+     * or any sub-account, chronological (oldest first), each carrying the
+     * transaction's per-currency net effect on the account and the running
+     * balance after it. A single missing posting amount is inferred the same
+     * way [computeBalances] infers it.
+     */
+    fun computeRegister(
+        transactions: List<Transaction>,
+        account: String
+    ): List<RegisterEntry> {
+        fun inScope(acc: String): Boolean =
+            acc == account || acc.startsWith("$account:")
+
+        val included = transactions
+            .filter { txn -> txn.postings.any { inScope(it.account) } }
+            .sortedBy { it.date }
+
+        val running = mutableMapOf<String, BigDecimal>()
+        val entries = mutableListOf<RegisterEntry>()
+
+        for (txn in included) {
+            val change = mutableMapOf<String, BigDecimal>()
+            val postingsWithAmounts = txn.postings.filter { it.amount != null }
+            val postingsWithoutAmounts = txn.postings.filter { it.amount == null }
+
+            // Explicit amounts posted to the account scope
+            for (posting in postingsWithAmounts) {
+                if (!inScope(posting.account)) continue
+                val amount = posting.amount!!
+                change[amount.currency] =
+                    (change[amount.currency] ?: BigDecimal.ZERO).add(amount.value)
+            }
+
+            // Inferred amount: a single missing posting must balance to zero
+            if (postingsWithoutAmounts.size == 1 &&
+                inScope(postingsWithoutAmounts[0].account)
+            ) {
+                val totals = mutableMapOf<String, BigDecimal>()
+                for (posting in postingsWithAmounts) {
+                    val amount = posting.amount!!
+                    totals[amount.currency] =
+                        (totals[amount.currency] ?: BigDecimal.ZERO).add(amount.value)
+                }
+                for ((currency, total) in totals) {
+                    change[currency] =
+                        (change[currency] ?: BigDecimal.ZERO).add(total.negate())
+                }
+            }
+
+            for ((currency, value) in change) {
+                running[currency] = (running[currency] ?: BigDecimal.ZERO).add(value)
+            }
+
+            entries.add(
+                RegisterEntry(
+                    transaction = txn,
+                    change = change.toMap(),
+                    balance = running.toMap()
+                )
+            )
+        }
+
+        return entries
     }
 
     /**

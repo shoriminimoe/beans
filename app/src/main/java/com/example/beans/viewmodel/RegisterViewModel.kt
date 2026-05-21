@@ -21,9 +21,14 @@ class RegisterViewModel(
     private val _entries = MutableStateFlow<List<RegisterEntry>>(emptyList())
     val entries: StateFlow<List<RegisterEntry>> = _entries.asStateFlow()
 
-    /** Refresh the list of accounts the picker offers. */
+    /**
+     * Refresh the list of accounts the picker offers. If an account is already
+     * selected, its register entries are recomputed so they reflect the current
+     * ledger.
+     */
     fun loadAccounts() {
         _accounts.value = calculator.selectableAccounts(repository.getTransactions())
+        _selectedAccount.value?.let { selectAccount(it) }
     }
 
     /** Select [account] and recompute its register entries. */

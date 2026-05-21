@@ -8,7 +8,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import com.example.beans.model.Amount
+import com.example.beans.model.Posting
+import com.example.beans.model.Transaction
 import java.math.BigDecimal
+import java.time.LocalDate
 
 class RegisterViewModelTest {
 
@@ -81,5 +85,28 @@ class RegisterViewModelTest {
         val entries = viewModel.entries.value
         assertEquals(3, entries.size)
         assertEquals(BigDecimal("3950.00"), entries.last().balance["USD"])
+    }
+
+    @Test
+    fun `loadAccounts refreshes entries for the already-selected account`() {
+        viewModel.selectAccount("Assets:Bank:Checking")
+        val countBefore = viewModel.entries.value.size
+
+        repository.addTransaction(
+            Transaction(
+                date = LocalDate.of(2024, 1, 4),
+                flag = "*",
+                payee = "Extra",
+                narration = "Extra deposit",
+                postings = listOf(
+                    Posting("Assets:Bank:Checking", Amount(BigDecimal("10.00"), "USD")),
+                    Posting("Income:Salary", null)
+                )
+            )
+        )
+
+        viewModel.loadAccounts()
+
+        assertEquals(countBefore + 1, viewModel.entries.value.size)
     }
 }

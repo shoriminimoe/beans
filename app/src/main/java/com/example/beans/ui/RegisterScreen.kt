@@ -42,6 +42,14 @@ import androidx.compose.ui.unit.dp
 import com.example.beans.model.RegisterEntry
 import java.time.format.DateTimeFormatter
 
+/**
+ * Shared, immutable date formatter. Hoisted out of [RegisterRow] so a new one
+ * is not parsed and built for every row that scrolls into view —
+ * [DateTimeFormatter] is thread-safe and stateless, so a single instance
+ * serves the whole register.
+ */
+private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
@@ -156,14 +164,13 @@ private fun AccountPicker(
 
 @Composable
 private fun RegisterRow(entry: RegisterEntry) {
-    val formatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
     val txn = entry.transaction
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
             val headerText =
                 buildAnnotatedString {
-                    append(txn.date.format(formatter))
+                    append(txn.date.format(dateFormatter))
                     append(" ")
                     if (txn.payee.isNotEmpty()) {
                         withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {

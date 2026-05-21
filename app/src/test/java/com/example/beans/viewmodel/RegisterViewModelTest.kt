@@ -90,6 +90,32 @@ class RegisterViewModelTest {
     }
 
     @Test
+    fun `reset clears accounts, selection, and entries`() {
+        viewModel.loadAccounts()
+        viewModel.selectAccount("Assets:Bank:Checking")
+        assertTrue(viewModel.accounts.value.isNotEmpty())
+        assertEquals("Assets:Bank:Checking", viewModel.selectedAccount.value)
+        assertTrue(viewModel.entries.value.isNotEmpty())
+
+        viewModel.reset()
+
+        assertTrue(viewModel.accounts.value.isEmpty())
+        assertNull(viewModel.selectedAccount.value)
+        assertTrue(viewModel.entries.value.isEmpty())
+    }
+
+    @Test
+    fun `loadAccounts after reset does not re-select a stale account`() {
+        viewModel.selectAccount("Assets:Bank:Checking")
+        viewModel.reset()
+
+        viewModel.loadAccounts()
+
+        assertNull(viewModel.selectedAccount.value)
+        assertTrue(viewModel.entries.value.isEmpty())
+    }
+
+    @Test
     fun `loadAccounts refreshes entries for the already-selected account`() {
         viewModel.selectAccount("Assets:Bank:Checking")
         val countBefore = viewModel.entries.value.size

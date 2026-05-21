@@ -35,4 +35,16 @@ class RegisterViewModel(
         _selectedAccount.value = account
         _entries.value = calculator.computeRegister(repository.getTransactions(), account)
     }
+
+    /**
+     * Clear all register state. Used when the active ledger changes so a stale
+     * account selection from the previous ledger is not carried over — without
+     * this, [loadAccounts] would re-select an account that may not exist in the
+     * new ledger.
+     */
+    fun reset() {
+        _accounts.value = emptyList()
+        _selectedAccount.value = null
+        _entries.value = emptyList()
+    }
 }

@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.beans.BuildConfig
 import com.example.beans.calculator.BalanceCalculator
 import com.example.beans.frecency.FrecencyTracker
 import com.example.beans.parser.BeancountParser
@@ -346,6 +347,15 @@ fun FilePickerScreen(
             Text(
                 text = "Beancount File Manager",
                 style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            // versionCode falls back to 1 for every non-release build, so it
+            // would be misleading to show — versionName alone identifies the
+            // release for bug reports.
+            Text(
+                text = "Version ${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.height(48.dp))

@@ -47,6 +47,14 @@ import androidx.compose.ui.unit.dp
 import com.example.beans.model.Transaction
 import java.time.format.DateTimeFormatter
 
+/**
+ * Shared, immutable date formatter. Hoisted out of [TransactionCard] so a new
+ * one is not parsed and built for every row that scrolls into view —
+ * [DateTimeFormatter] is thread-safe and stateless, so a single instance
+ * serves the whole list.
+ */
+private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionListScreen(
@@ -124,7 +132,6 @@ private fun TransactionCard(
     onDelete: () -> Unit,
     onDuplicate: () -> Unit,
 ) {
-    val formatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
     val context = LocalContext.current
     var showMenu by remember { mutableStateOf(false) }
 
@@ -142,7 +149,7 @@ private fun TransactionCard(
                 // Header: date, flag, payee (bold), narration (plain)
                 val headerText =
                     buildAnnotatedString {
-                        append(transaction.date.format(formatter))
+                        append(transaction.date.format(dateFormatter))
                         append(" ")
                         if (transaction.flag == "!") append("! ")
                         if (transaction.payee.isNotEmpty()) {
@@ -193,7 +200,7 @@ private fun TransactionCard(
                         showMenu = false
                         val text =
                             buildString {
-                                append(transaction.date.format(formatter))
+                                append(transaction.date.format(dateFormatter))
                                 append(" ${transaction.flag} ")
                                 if (transaction.payee.isNotEmpty()) {
                                     append("\"${transaction.payee}\" ")

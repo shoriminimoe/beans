@@ -173,13 +173,17 @@ private fun RegisterRow(entry: RegisterEntry) {
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    for ((currency, amount) in entry.balance) {
-                        Text(
-                            text = "${amount.toPlainString()} $currency",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = balanceColor(amount)
-                        )
+                    if (entry.balance.isEmpty()) {
+                        Text("—", style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        for ((currency, amount) in entry.balance) {
+                            Text(
+                                text = "${amount.toPlainString()} $currency",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = balanceColor(amount)
+                            )
+                        }
                     }
                 }
             }

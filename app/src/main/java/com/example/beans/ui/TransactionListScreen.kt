@@ -108,7 +108,16 @@ fun TransactionListScreen(
                     Modifier
                         .fillMaxSize()
                         .padding(padding),
-                contentPadding = PaddingValues(16.dp),
+                // Bottom inset is larger so the last transaction can scroll
+                // clear of the floating "+" button instead of being hidden
+                // behind it: base 16dp gap + 56dp FAB height + 16dp FAB margin.
+                contentPadding =
+                    PaddingValues(
+                        start = 16.dp,
+                        top = 16.dp,
+                        end = 16.dp,
+                        bottom = 16.dp + 56.dp + 16.dp,
+                    ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(transactions, key = { it.id }) { txn ->

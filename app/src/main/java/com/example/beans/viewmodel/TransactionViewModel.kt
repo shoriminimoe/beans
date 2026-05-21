@@ -6,8 +6,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class TransactionViewModel(private val repository: BeancountRepository) {
-
+class TransactionViewModel(
+    private val repository: BeancountRepository,
+) {
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions.asStateFlow()
 

@@ -1,12 +1,12 @@
 package com.example.beans.ui
 
 import com.example.beans.frecency.FakeSharedPreferences
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 class RecentFilesTest {
-
     private lateinit var prefs: FakeSharedPreferences
 
     @Before

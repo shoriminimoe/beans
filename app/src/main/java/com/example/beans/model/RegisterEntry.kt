@@ -9,5 +9,5 @@ import java.math.BigDecimal
 data class RegisterEntry(
     val transaction: Transaction,
     val change: Map<String, BigDecimal>,
-    val balance: Map<String, BigDecimal>
+    val balance: Map<String, BigDecimal>,
 )

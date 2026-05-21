@@ -1,12 +1,37 @@
 package com.example.beans.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
@@ -23,10 +48,12 @@ fun RegisterScreen(
     accounts: List<String>,
     selectedAccount: String?,
     entries: List<RegisterEntry>,
-    onAccountSelected: (String) -> Unit,
-    onBack: () -> Unit
+    onAccountSelect: (String) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = { Text("Register") },
@@ -34,36 +61,39 @@ fun RegisterScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
             AccountPicker(
                 accounts = accounts,
                 selectedAccount = selectedAccount,
-                onAccountSelected = onAccountSelected,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                onAccountSelect = onAccountSelect,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
             )
 
             when {
                 selectedAccount == null -> RegisterMessage("Select an account")
                 entries.isEmpty() -> RegisterMessage("No transactions for this account")
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(entries, key = { it.transaction.id }) { entry ->
-                        RegisterRow(entry)
+                else ->
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(entries, key = { it.transaction.id }) { entry ->
+                            RegisterRow(entry)
+                        }
                     }
-                }
             }
         }
     }
@@ -73,7 +103,7 @@ fun RegisterScreen(
 private fun RegisterMessage(text: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(text, style = MaterialTheme.typography.bodyLarge)
     }
@@ -84,15 +114,15 @@ private fun RegisterMessage(text: String) {
 private fun AccountPicker(
     accounts: List<String>,
     selectedAccount: String?,
-    onAccountSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onAccountSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = it },
-        modifier = modifier
+        modifier = modifier,
     ) {
         TextField(
             value = selectedAccount ?: "",
@@ -102,21 +132,22 @@ private fun AccountPicker(
             placeholder = { Text("Select an account") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth()
+            modifier =
+                Modifier
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth(),
         )
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
         ) {
             for (account in accounts) {
                 DropdownMenuItem(
                     text = { Text(account) },
                     onClick = {
                         expanded = false
-                        onAccountSelected(account)
-                    }
+                        onAccountSelect(account)
+                    },
                 )
             }
         }
@@ -130,30 +161,31 @@ private fun RegisterRow(entry: RegisterEntry) {
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
-            val headerText = buildAnnotatedString {
-                append(txn.date.format(formatter))
-                append(" ")
-                if (txn.payee.isNotEmpty()) {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(txn.payee)
-                    }
+            val headerText =
+                buildAnnotatedString {
+                    append(txn.date.format(formatter))
                     append(" ")
+                    if (txn.payee.isNotEmpty()) {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(txn.payee)
+                        }
+                        append(" ")
+                    }
+                    append(txn.narration)
                 }
-                append(txn.narration)
-            }
             Text(text = headerText, style = MaterialTheme.typography.bodyMedium)
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
                     Text(
                         text = "Change",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (entry.change.isEmpty()) {
                         Text("—", style = MaterialTheme.typography.bodySmall)
@@ -162,7 +194,7 @@ private fun RegisterRow(entry: RegisterEntry) {
                             Text(
                                 text = "${amount.toPlainString()} $currency",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = balanceColor(amount)
+                                color = balanceColor(amount),
                             )
                         }
                     }
@@ -171,7 +203,7 @@ private fun RegisterRow(entry: RegisterEntry) {
                     Text(
                         text = "Balance",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (entry.balance.isEmpty()) {
                         Text("—", style = MaterialTheme.typography.bodySmall)
@@ -181,7 +213,7 @@ private fun RegisterRow(entry: RegisterEntry) {
                                 text = "${amount.toPlainString()} $currency",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
-                                color = balanceColor(amount)
+                                color = balanceColor(amount),
                             )
                         }
                     }

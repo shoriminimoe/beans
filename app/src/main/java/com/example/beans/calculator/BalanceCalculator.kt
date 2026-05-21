@@ -5,14 +5,11 @@ import com.example.beans.model.Transaction
 import java.math.BigDecimal
 
 class BalanceCalculator {
-
     /**
      * Compute per-account balances from a list of transactions.
      * Returns: Map of account name -> (currency -> total balance)
      */
-    fun computeBalances(
-        transactions: List<Transaction>
-    ): Map<String, Map<String, BigDecimal>> {
+    fun computeBalances(transactions: List<Transaction>): Map<String, Map<String, BigDecimal>> {
         val balances = mutableMapOf<String, MutableMap<String, BigDecimal>>()
 
         for (txn in transactions) {
@@ -48,15 +45,13 @@ class BalanceCalculator {
     /**
      * Group balances by top-level account type (Assets, Liabilities, Equity, Income, Expenses).
      */
-    fun groupByAccountType(
-        balances: Map<String, Map<String, BigDecimal>>
-    ): Map<String, Map<String, Map<String, BigDecimal>>> {
-        return balances.entries.groupBy { (account, _) ->
-            account.substringBefore(":")
-        }.mapValues { (_, entries) ->
-            entries.associate { it.key to it.value }
-        }
-    }
+    fun groupByAccountType(balances: Map<String, Map<String, BigDecimal>>): Map<String, Map<String, Map<String, BigDecimal>>> =
+        balances.entries
+            .groupBy { (account, _) ->
+                account.substringBefore(":")
+            }.mapValues { (_, entries) ->
+                entries.associate { it.key to it.value }
+            }
 
     /**
      * All accounts selectable in the register: every posting account plus every
@@ -85,14 +80,14 @@ class BalanceCalculator {
      */
     fun computeRegister(
         transactions: List<Transaction>,
-        account: String
+        account: String,
     ): List<RegisterEntry> {
-        fun inScope(acc: String): Boolean =
-            acc == account || acc.startsWith("$account:")
+        fun inScope(acc: String): Boolean = acc == account || acc.startsWith("$account:")
 
-        val included = transactions
-            .filter { txn -> txn.postings.any { inScope(it.account) } }
-            .sortedBy { it.date }
+        val included =
+            transactions
+                .filter { txn -> txn.postings.any { inScope(it.account) } }
+                .sortedBy { it.date }
 
         val running = mutableMapOf<String, BigDecimal>()
         val entries = mutableListOf<RegisterEntry>()
@@ -134,8 +129,8 @@ class BalanceCalculator {
                 RegisterEntry(
                     transaction = txn,
                     change = change.toMap(),
-                    balance = running.toMap()
-                )
+                    balance = running.toMap(),
+                ),
             )
         }
 

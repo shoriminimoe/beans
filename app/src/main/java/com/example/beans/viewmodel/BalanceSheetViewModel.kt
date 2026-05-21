@@ -9,9 +9,8 @@ import java.math.BigDecimal
 
 class BalanceSheetViewModel(
     private val repository: BeancountRepository,
-    private val calculator: BalanceCalculator
+    private val calculator: BalanceCalculator,
 ) {
-
     private val _balances = MutableStateFlow<Map<String, Map<String, BigDecimal>>>(emptyMap())
     val balances: StateFlow<Map<String, Map<String, BigDecimal>>> = _balances.asStateFlow()
 

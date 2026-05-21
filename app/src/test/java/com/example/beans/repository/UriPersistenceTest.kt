@@ -4,27 +4,27 @@ import com.example.beans.model.Amount
 import com.example.beans.model.Posting
 import com.example.beans.model.Transaction
 import com.example.beans.parser.BeancountParser
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.File
 import java.math.BigDecimal
 import java.time.LocalDate
 
 class UriPersistenceTest {
-
     @get:Rule
     val tempFolder = TemporaryFolder()
 
     private lateinit var repository: BeancountRepository
 
-    private val sampleContent = """
+    private val sampleContent =
+        """
         2024-01-01 * "Store" "Groceries"
           Expenses:Food  20.00 USD
           Assets:Cash
-    """.trimIndent()
+        """.trimIndent()
 
     @Before
     fun setUp() {
@@ -47,11 +47,12 @@ class UriPersistenceTest {
                 flag = "*",
                 payee = "New Store",
                 narration = "New stuff",
-                postings = listOf(
-                    Posting("Expenses:Misc", Amount(BigDecimal("10.00"), "USD")),
-                    Posting("Assets:Cash", null)
-                )
-            )
+                postings =
+                    listOf(
+                        Posting("Expenses:Misc", Amount(BigDecimal("10.00"), "USD")),
+                        Posting("Assets:Cash", null),
+                    ),
+            ),
         )
         repository.save()
 
@@ -71,11 +72,12 @@ class UriPersistenceTest {
                 flag = "*",
                 payee = "Local Only",
                 narration = "Test",
-                postings = listOf(
-                    Posting("Expenses:Misc", Amount(BigDecimal("5.00"), "USD")),
-                    Posting("Assets:Cash", null)
-                )
-            )
+                postings =
+                    listOf(
+                        Posting("Expenses:Misc", Amount(BigDecimal("5.00"), "USD")),
+                        Posting("Assets:Cash", null),
+                    ),
+            ),
         )
         repository.save()
 

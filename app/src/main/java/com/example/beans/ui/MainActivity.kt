@@ -9,13 +9,33 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -54,7 +74,7 @@ class MainActivity : ComponentActivity() {
                     balanceSheetViewModel = balanceSheetViewModel,
                     registerViewModel = registerViewModel,
                     prefs = prefs,
-                    frecencyTracker = frecencyTracker
+                    frecencyTracker = frecencyTracker,
                 )
             }
         }
@@ -68,7 +88,7 @@ fun BeansApp(
     balanceSheetViewModel: BalanceSheetViewModel,
     registerViewModel: RegisterViewModel,
     prefs: SharedPreferences,
-    frecencyTracker: FrecencyTracker
+    frecencyTracker: FrecencyTracker,
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -80,7 +100,7 @@ fun BeansApp(
         context.contentResolver.takePersistableUriPermission(
             uri,
             android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
         )
         val inputStream = context.contentResolver.openInputStream(uri)
         val content = inputStream?.bufferedReader()?.readText() ?: ""
@@ -119,32 +139,34 @@ fun BeansApp(
         }
     }
 
-    val filePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        uri?.let { openFileFromUri(it) }
-    }
-
-    val fileCreator = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
-    ) { uri: Uri? ->
-        uri?.let {
-            context.contentResolver.takePersistableUriPermission(
-                it,
-                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            )
-            val localFile = File(context.filesDir, "current.beancount")
-            localFile.writeText("; New Beancount Ledger\n")
-            repository.loadFromContent("; New Beancount Ledger\n", localFile)
-            sourceUri = it
-
-            RecentFiles.addRecent(prefs, it.toString())
-
-            transactionViewModel.loadTransactions()
-            fileLoaded = true
+    val filePicker =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+        ) { uri: Uri? ->
+            uri?.let { openFileFromUri(it) }
         }
-    }
+
+    val fileCreator =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
+        ) { uri: Uri? ->
+            uri?.let {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
+                val localFile = File(context.filesDir, "current.beancount")
+                localFile.writeText("; New Beancount Ledger\n")
+                repository.loadFromContent("; New Beancount Ledger\n", localFile)
+                sourceUri = it
+
+                RecentFiles.addRecent(prefs, it.toString())
+
+                transactionViewModel.loadTransactions()
+                fileLoaded = true
+            }
+        }
 
     if (!fileLoaded) {
         val recentFiles = remember { RecentFiles.getRecent(prefs) }
@@ -161,7 +183,7 @@ fun BeansApp(
             },
             onRecentFileRemove = { uriString ->
                 RecentFiles.removeRecent(prefs, uriString)
-            }
+            },
         )
     } else {
         NavHost(navController = navController, startDestination = "transactions") {
@@ -190,18 +212,25 @@ fun BeansApp(
                         navController.navigate("register")
                     },
                     onDuplicateClick = { txn ->
-                        val duplicate = txn.copy(id = java.util.UUID.randomUUID().toString())
+                        val duplicate =
+                            txn.copy(
+                                id =
+                                    java.util.UUID
+                                        .randomUUID()
+                                        .toString(),
+                            )
                         transactionViewModel.addTransaction(duplicate)
                         saveToSource()
-                    }
+                    },
                 )
             }
 
             composable("editor") {
                 val transactions by transactionViewModel.transactions.collectAsState()
-                val existingTxn = editingTransaction?.let { id ->
-                    transactions.find { it.id == id }
-                }
+                val existingTxn =
+                    editingTransaction?.let { id ->
+                        transactions.find { it.id == id }
+                    }
                 TransactionEditorScreen(
                     existingTransaction = existingTxn,
                     frecencyTracker = frecencyTracker,
@@ -223,7 +252,7 @@ fun BeansApp(
                         saveToSource()
                         navController.popBackStack()
                     },
-                    onCancel = { navController.popBackStack() }
+                    onCancel = { navController.popBackStack() },
                 )
             }
 
@@ -231,7 +260,7 @@ fun BeansApp(
                 val grouped by balanceSheetViewModel.groupedBalances.collectAsState()
                 BalanceSheetScreen(
                     groupedBalances = grouped,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
                 )
             }
 
@@ -243,8 +272,8 @@ fun BeansApp(
                     accounts = accounts,
                     selectedAccount = selectedAccount,
                     entries = entries,
-                    onAccountSelected = { registerViewModel.selectAccount(it) },
-                    onBack = { navController.popBackStack() }
+                    onAccountSelect = { registerViewModel.selectAccount(it) },
+                    onBack = { navController.popBackStack() },
                 )
             }
         }
@@ -260,7 +289,10 @@ object RecentFiles {
         return if (raw.isEmpty()) emptyList() else raw.split("\n").filter { it.isNotEmpty() }
     }
 
-    fun addRecent(prefs: SharedPreferences, uriString: String) {
+    fun addRecent(
+        prefs: SharedPreferences,
+        uriString: String,
+    ) {
         val existing = getRecent(prefs).toMutableList()
         existing.remove(uriString)
         existing.add(0, uriString)
@@ -268,7 +300,10 @@ object RecentFiles {
         prefs.edit().putString(KEY, trimmed.joinToString("\n")).apply()
     }
 
-    fun removeRecent(prefs: SharedPreferences, uriString: String) {
+    fun removeRecent(
+        prefs: SharedPreferences,
+        uriString: String,
+    ) {
         val existing = getRecent(prefs).toMutableList()
         existing.remove(uriString)
         prefs.edit().putString(KEY, existing.joinToString("\n")).apply()
@@ -279,39 +314,41 @@ object RecentFiles {
 fun FilePickerScreen(
     onOpenFile: () -> Unit,
     onNewFile: () -> Unit,
+    modifier: Modifier = Modifier,
     recentFiles: List<String> = emptyList(),
     onRecentFileClick: (String) -> Unit = {},
-    onRecentFileRemove: (String) -> Unit = {}
+    onRecentFileRemove: (String) -> Unit = {},
 ) {
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
             verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = "Beans",
-                style = MaterialTheme.typography.displayMedium
+                style = MaterialTheme.typography.displayMedium,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Beancount File Manager",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.height(48.dp))
             Button(
                 onClick = onOpenFile,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Open Beancount File")
             }
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = onNewFile,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Create New Ledger")
             }
@@ -320,40 +357,42 @@ fun FilePickerScreen(
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
                     text = "Recent Files",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyColumn(
                     modifier = Modifier.weight(1f, fill = false),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     items(recentFiles) { uriString ->
                         val displayName = Uri.parse(uriString).lastPathSegment ?: uriString
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onRecentFileClick(uriString) }
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onRecentFileClick(uriString) },
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     text = displayName,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
                                 )
                                 IconButton(
                                     onClick = { onRecentFileRemove(uriString) },
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
                                 ) {
                                     Icon(
                                         Icons.Default.Close,
                                         contentDescription = "Remove",
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(16.dp),
                                     )
                                 }
                             }

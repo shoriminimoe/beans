@@ -1,20 +1,21 @@
 package com.example.beans.repository
 
 import com.example.beans.parser.BeancountParser
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 class AccountPayeeExtractionTest {
-
     @get:Rule
     val tempFolder = TemporaryFolder()
 
     private lateinit var repository: BeancountRepository
 
-    private val sampleContent = """
+    private val sampleContent =
+        """
         2024-01-01 * "Store A" "Groceries"
           Expenses:Food  20.00 USD
           Assets:Cash
@@ -26,7 +27,7 @@ class AccountPayeeExtractionTest {
         2024-01-03 * "Transfer"
           Assets:Bank:Savings  500.00 USD
           Assets:Bank:Checking
-    """.trimIndent()
+        """.trimIndent()
 
     @Before
     fun setUp() {

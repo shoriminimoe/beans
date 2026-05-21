@@ -197,7 +197,10 @@ private fun RegisterRow(entry: RegisterEntry) {
                     if (entry.change.isEmpty()) {
                         Text("—", style = MaterialTheme.typography.bodySmall)
                     } else {
-                        for ((currency, amount) in entry.change) {
+                        // Sort by currency so the order is stable across rows
+                        // and matches the Balance column (the maps iterate in
+                        // posting-encounter order otherwise).
+                        for ((currency, amount) in entry.change.entries.sortedBy { it.key }) {
                             Text(
                                 text = "${amount.toPlainString()} $currency",
                                 style = MaterialTheme.typography.bodySmall,
@@ -215,7 +218,7 @@ private fun RegisterRow(entry: RegisterEntry) {
                     if (entry.balance.isEmpty()) {
                         Text("—", style = MaterialTheme.typography.bodySmall)
                     } else {
-                        for ((currency, amount) in entry.balance) {
+                        for ((currency, amount) in entry.balance.entries.sortedBy { it.key }) {
                             Text(
                                 text = "${amount.toPlainString()} $currency",
                                 style = MaterialTheme.typography.bodyMedium,

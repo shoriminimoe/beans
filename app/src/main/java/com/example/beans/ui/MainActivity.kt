@@ -222,6 +222,12 @@ fun BeansApp(
                         transactionViewModel.addTransaction(duplicate)
                         saveToSource()
                     },
+                    onSwitchLedger = {
+                        // Mutations auto-save to the source, so there is nothing
+                        // unsaved to lose — just return to ledger selection.
+                        editingTransaction = null
+                        fileLoaded = false
+                    },
                 )
             }
 

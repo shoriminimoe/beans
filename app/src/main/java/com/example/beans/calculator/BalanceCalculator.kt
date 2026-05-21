@@ -23,17 +23,11 @@ class BalanceCalculator {
                 accountBalances[amount.currency] = (accountBalances[amount.currency] ?: BigDecimal.ZERO).add(amount.value)
             }
 
-            // Infer missing amount: must balance to zero per currency
+            // Infer the single missing amount so the transaction nets to zero.
             if (postingsWithoutAmounts.size == 1) {
                 val inferredAccount = postingsWithoutAmounts[0].account
-                val totals = mutableMapOf<String, BigDecimal>()
-                for (posting in postingsWithAmounts) {
-                    val amount = posting.amount!!
-                    totals[amount.currency] = (totals[amount.currency] ?: BigDecimal.ZERO).add(amount.value)
-                }
                 val accountBalances = balances.getOrPut(inferredAccount) { mutableMapOf() }
-                for ((currency, total) in totals) {
-                    val inferred = total.negate()
+                for ((currency, inferred) in inferredAmounts(txn)) {
                     accountBalances[currency] = (accountBalances[currency] ?: BigDecimal.ZERO).add(inferred)
                 }
             }
@@ -105,19 +99,13 @@ class BalanceCalculator {
                     (change[amount.currency] ?: BigDecimal.ZERO).add(amount.value)
             }
 
-            // Inferred amount: a single missing posting must balance to zero
+            // Inferred amount: a single missing posting balances the txn.
             if (postingsWithoutAmounts.size == 1 &&
                 inScope(postingsWithoutAmounts[0].account)
             ) {
-                val totals = mutableMapOf<String, BigDecimal>()
-                for (posting in postingsWithAmounts) {
-                    val amount = posting.amount!!
-                    totals[amount.currency] =
-                        (totals[amount.currency] ?: BigDecimal.ZERO).add(amount.value)
-                }
-                for ((currency, total) in totals) {
+                for ((currency, inferred) in inferredAmounts(txn)) {
                     change[currency] =
-                        (change[currency] ?: BigDecimal.ZERO).add(total.negate())
+                        (change[currency] ?: BigDecimal.ZERO).add(inferred)
                 }
             }
 
@@ -135,5 +123,28 @@ class BalanceCalculator {
         }
 
         return entries
+    }
+
+    /**
+     * The per-currency amounts of a transaction's single amount-less posting.
+     *
+     * Beancount requires every transaction to net to zero per currency, so a
+     * lone posting without an explicit amount takes the negation of the
+     * per-currency totals of the postings that do have amounts. Returns an
+     * empty map unless exactly one posting is missing an amount — with zero,
+     * or two or more, there is nothing (or too much) to infer.
+     *
+     * Shared by [computeBalances] and [computeRegister] so both apply the
+     * inference rule identically.
+     */
+    private fun inferredAmounts(txn: Transaction): Map<String, BigDecimal> {
+        if (txn.postings.count { it.amount == null } != 1) return emptyMap()
+
+        val totals = mutableMapOf<String, BigDecimal>()
+        for (posting in txn.postings) {
+            val amount = posting.amount ?: continue
+            totals[amount.currency] = (totals[amount.currency] ?: BigDecimal.ZERO).add(amount.value)
+        }
+        return totals.mapValues { (_, total) -> total.negate() }
     }
 }

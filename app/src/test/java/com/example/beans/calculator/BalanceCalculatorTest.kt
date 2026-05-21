@@ -155,4 +155,44 @@ class BalanceCalculatorTest {
         assertEquals(BigDecimal("20.00"), balances["Expenses:Drink"]?.get("USD"))
         assertEquals(BigDecimal("-50.00"), balances["Assets:Cash"]?.get("USD"))
     }
+
+    @Test
+    fun `selectable accounts include ancestor prefixes`() {
+        val transactions = listOf(
+            txn(
+                Posting("Assets:Bank:Checking", Amount(BigDecimal("100.00"), "USD")),
+                Posting("Expenses:Food", null)
+            )
+        )
+
+        val accounts = calculator.selectableAccounts(transactions)
+
+        assertEquals(
+            listOf("Assets", "Assets:Bank", "Assets:Bank:Checking", "Expenses", "Expenses:Food"),
+            accounts
+        )
+    }
+
+    @Test
+    fun `selectable accounts are sorted and deduplicated`() {
+        val transactions = listOf(
+            txn(
+                Posting("Assets:Cash", Amount(BigDecimal("10.00"), "USD")),
+                Posting("Expenses:Food", null)
+            ),
+            txn(
+                Posting("Assets:Cash", Amount(BigDecimal("20.00"), "USD")),
+                Posting("Expenses:Food", null)
+            )
+        )
+
+        val accounts = calculator.selectableAccounts(transactions)
+
+        assertEquals(listOf("Assets", "Assets:Cash", "Expenses", "Expenses:Food"), accounts)
+    }
+
+    @Test
+    fun `selectable accounts empty for no transactions`() {
+        assertTrue(calculator.selectableAccounts(emptyList()).isEmpty())
+    }
 }

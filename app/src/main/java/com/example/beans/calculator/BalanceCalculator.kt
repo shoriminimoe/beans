@@ -56,4 +56,22 @@ class BalanceCalculator {
             entries.associate { it.key to it.value }
         }
     }
+
+    /**
+     * All accounts selectable in the register: every posting account plus every
+     * ancestor prefix (so "Assets:Bank" is offered even when only
+     * "Assets:Bank:Checking" has postings). Sorted and deduplicated.
+     */
+    fun selectableAccounts(transactions: List<Transaction>): List<String> {
+        val accounts = mutableSetOf<String>()
+        for (txn in transactions) {
+            for (posting in txn.postings) {
+                val parts = posting.account.split(":")
+                for (i in parts.indices) {
+                    accounts.add(parts.subList(0, i + 1).joinToString(":"))
+                }
+            }
+        }
+        return accounts.sorted()
+    }
 }

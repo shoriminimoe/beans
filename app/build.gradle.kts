@@ -12,13 +12,29 @@ android {
         applicationId = "com.example.beans"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = (project.findProperty("releaseVersionCode") as String?)?.toInt() ?: 1
+        versionName = "0.1.0" // x-release-please-version
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        // Stable, repo-committed debug keystore so CI-built APKs match
+        // locally-built ones and can be sideloaded over each other without
+        // a forced uninstall. Debug-only, well-known default credentials;
+        // grants no production access.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(

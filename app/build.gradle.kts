@@ -56,6 +56,14 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        abortOnError = true
+        checkReleaseBuilds = true
+        // AGP 8.7.x lags the latest release; lint flags this and we track
+        // toolchain upgrades separately rather than failing CI on it.
+        disable += "AndroidGradlePluginVersion"
+    }
 }
 
 dependencies {

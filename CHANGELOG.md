@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.0](https://github.com/shoriminimoe/beans/compare/v0.3.0...v0.4.0) (2026-05-22)
+
+
+### Features
+
+* sort transactions newest-first in the ledger and register ([317141f](https://github.com/shoriminimoe/beans/commit/317141f9073c656ab32fe4a8acc97388c3d9fb17))
+* sort transactions newest-first in the ledger and register ([efc54ac](https://github.com/shoriminimoe/beans/commit/efc54acee241280b0c1d309555a916bf9e32cc00)), closes [#17](https://github.com/shoriminimoe/beans/issues/17)
+* type-to-filter account selector on the register screen ([ae4592a](https://github.com/shoriminimoe/beans/commit/ae4592a6b4ee6a2af3c1ff6e28ba5278aa1a4cfe))
+* type-to-filter account selector on the register screen ([0fed45b](https://github.com/shoriminimoe/beans/commit/0fed45bb5a0036c9dd054b16e1ad0dd91b940e26)), closes [#18](https://github.com/shoriminimoe/beans/issues/18)
+
+
+### Bug Fixes
+
+* keep caret at end after applying an autocomplete suggestion ([b615a96](https://github.com/shoriminimoe/beans/commit/b615a963a86d5166226df21ac36f657e37817581))
+* keep caret at end after applying an autocomplete suggestion ([cb7a064](https://github.com/shoriminimoe/beans/commit/cb7a064c6f48630bbba11f4e5476b7fad75f6198)), closes [#19](https://github.com/shoriminimoe/beans/issues/19)
+
 ## [0.3.0](https://github.com/shoriminimoe/beans/compare/v0.2.0...v0.3.0) (2026-05-21)
 
 

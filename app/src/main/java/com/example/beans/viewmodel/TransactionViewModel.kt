@@ -13,25 +13,34 @@ class TransactionViewModel(
     val transactions: StateFlow<List<Transaction>> = _transactions.asStateFlow()
 
     fun loadTransactions() {
-        _transactions.value = repository.getTransactions()
+        refresh()
     }
 
     fun addTransaction(transaction: Transaction) {
         repository.addTransaction(transaction)
-        _transactions.value = repository.getTransactions()
+        refresh()
     }
 
     fun updateTransaction(transaction: Transaction) {
         repository.updateTransaction(transaction)
-        _transactions.value = repository.getTransactions()
+        refresh()
     }
 
     fun deleteTransaction(id: String) {
         repository.deleteTransaction(id)
-        _transactions.value = repository.getTransactions()
+        refresh()
     }
 
     fun save() {
         repository.save()
+    }
+
+    /**
+     * Re-read the ledger and publish it newest-first. The repository keeps
+     * transactions in file order; the list screen shows the most recent date
+     * at the top.
+     */
+    private fun refresh() {
+        _transactions.value = repository.getTransactions().sortedByDescending { it.date }
     }
 }

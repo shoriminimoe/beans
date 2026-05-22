@@ -65,7 +65,45 @@ class TransactionViewModelTest {
 
             val transactions = viewModel.transactions.value
             assertEquals(2, transactions.size)
-            assertEquals("Store A", transactions[0].payee)
+            // Newest date first: Coffee Shop (2024-01-02) before Store A (2024-01-01).
+            assertEquals("Coffee Shop", transactions[0].payee)
+        }
+
+    @Test
+    fun `transactions are listed newest date first`() =
+        runTest(testDispatcher) {
+            viewModel.loadTransactions()
+            advanceUntilIdle()
+
+            val dates = viewModel.transactions.value.map { it.date }
+            assertEquals(dates.sortedDescending(), dates)
+            assertEquals(LocalDate.of(2024, 1, 2), dates.first())
+        }
+
+    @Test
+    fun `a newly added transaction is placed by date, not appended`() =
+        runTest(testDispatcher) {
+            viewModel.loadTransactions()
+            advanceUntilIdle()
+
+            // The repository appends to the file; a transaction with the
+            // latest date must still sort to the top of the list.
+            viewModel.addTransaction(
+                Transaction(
+                    date = LocalDate.of(2024, 3, 15),
+                    flag = "*",
+                    payee = "Latest",
+                    narration = "Newest entry",
+                    postings =
+                        listOf(
+                            Posting("Expenses:Food", Amount(BigDecimal("1.00"), "USD")),
+                            Posting("Assets:Cash", null),
+                        ),
+                ),
+            )
+            advanceUntilIdle()
+
+            assertEquals("Latest", viewModel.transactions.value[0].payee)
         }
 
     @Test
@@ -119,7 +157,7 @@ class TransactionViewModelTest {
             advanceUntilIdle()
 
             assertEquals(1, viewModel.transactions.value.size)
-            assertEquals("Coffee Shop", viewModel.transactions.value[0].payee)
+            assertEquals("Store A", viewModel.transactions.value[0].payee)
         }
 
     @Test

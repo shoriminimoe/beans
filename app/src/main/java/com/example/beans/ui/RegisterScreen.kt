@@ -14,18 +14,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +38,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import com.example.beans.model.RegisterEntry
 import java.time.format.DateTimeFormatter
 
@@ -117,7 +117,29 @@ private fun RegisterMessage(text: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Accounts the register picker offers for [query]: a case-insensitive
+ * substring match over [accounts], with accounts that start with the query
+ * ranked first. A blank query offers the whole list. The input order of
+ * [accounts] (already sorted) is preserved within each rank.
+ */
+internal fun filterAccounts(
+    accounts: List<String>,
+    query: String,
+): List<String> {
+    val q = query.trim()
+    if (q.isEmpty()) return accounts
+    return accounts
+        .filter { it.contains(q, ignoreCase = true) }
+        .sortedByDescending { it.startsWith(q, ignoreCase = true) }
+}
+
+/**
+ * Account selector for the register. The user types to filter accounts and
+ * picks one from the suggestion dropdown; only picking a suggestion selects
+ * an account and drives [onAccountSelect]. The trailing arrow opens the full
+ * list without typing.
+ */
 @Composable
 private fun AccountPicker(
     accounts: List<String>,
@@ -126,33 +148,48 @@ private fun AccountPicker(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    // Field text is local — it changes as the user types, while
+    // `selectedAccount` only changes once a suggestion is committed. Keying
+    // the state on `selectedAccount` re-syncs the field when the selection
+    // changes (including the initial selection and a ledger switch).
+    var fieldValue by remember(selectedAccount) {
+        mutableStateOf(textFieldValueAtEnd(selectedAccount ?: ""))
+    }
+    val matches =
+        remember(fieldValue.text, accounts) {
+            filterAccounts(accounts, fieldValue.text)
+        }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = modifier,
-    ) {
-        TextField(
-            value = selectedAccount ?: "",
-            onValueChange = {},
-            readOnly = true,
+    Box(modifier = modifier) {
+        OutlinedTextField(
+            value = fieldValue,
+            onValueChange = {
+                fieldValue = it
+                expanded = true
+            },
             label = { Text("Account") },
-            placeholder = { Text("Select an account") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            modifier =
-                Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                    .fillMaxWidth(),
+            placeholder = { Text("Type to filter accounts") },
+            singleLine = true,
+            trailingIcon = {
+                IconButton(onClick = { expanded = !expanded }) {
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Show accounts")
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
         )
-        ExposedDropdownMenu(
-            expanded = expanded,
+        DropdownMenu(
+            expanded = expanded && matches.isNotEmpty(),
             onDismissRequest = { expanded = false },
+            // Non-focusable so the text field keeps focus and the keyboard
+            // stays up while suggestions narrow.
+            properties = PopupProperties(focusable = false),
+            modifier = Modifier.fillMaxWidth(0.9f),
         ) {
-            for (account in accounts) {
+            matches.forEach { account ->
                 DropdownMenuItem(
                     text = { Text(account) },
                     onClick = {
+                        fieldValue = textFieldValueAtEnd(account)
                         expanded = false
                         onAccountSelect(account)
                     },

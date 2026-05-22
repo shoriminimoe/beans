@@ -33,7 +33,10 @@ class RegisterViewModel(
     /** Select [account] and recompute its register entries. */
     fun selectAccount(account: String) {
         _selectedAccount.value = account
-        _entries.value = calculator.computeRegister(repository.getTransactions(), account)
+        // computeRegister builds entries oldest-first so the running balance
+        // accumulates chronologically; reverse for a newest-first display.
+        _entries.value =
+            calculator.computeRegister(repository.getTransactions(), account).reversed()
     }
 
     /**

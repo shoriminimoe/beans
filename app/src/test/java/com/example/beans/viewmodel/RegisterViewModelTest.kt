@@ -76,8 +76,9 @@ class RegisterViewModelTest {
 
         val entries = viewModel.entries.value
         assertEquals(3, entries.size)
-        // 1000 - 50 + 3000 = 3950
-        assertEquals(BigDecimal("3950.00"), entries.last().balance["USD"])
+        // Entries are newest-first, so the top one carries the final running
+        // balance: 1000 - 50 + 3000 = 3950.
+        assertEquals(BigDecimal("3950.00"), entries.first().balance["USD"])
     }
 
     @Test
@@ -86,7 +87,16 @@ class RegisterViewModelTest {
 
         val entries = viewModel.entries.value
         assertEquals(3, entries.size)
-        assertEquals(BigDecimal("3950.00"), entries.last().balance["USD"])
+        assertEquals(BigDecimal("3950.00"), entries.first().balance["USD"])
+    }
+
+    @Test
+    fun `entries are ordered newest date first`() {
+        viewModel.selectAccount("Assets:Bank:Checking")
+
+        val dates = viewModel.entries.value.map { it.transaction.date }
+        assertEquals(dates.sortedDescending(), dates)
+        assertEquals(LocalDate.of(2024, 1, 3), dates.first())
     }
 
     @Test

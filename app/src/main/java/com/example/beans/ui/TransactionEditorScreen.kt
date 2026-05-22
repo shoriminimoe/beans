@@ -43,7 +43,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.example.beans.frecency.FrecencyTracker
@@ -336,6 +338,17 @@ private fun PostingRow(
 }
 
 /**
+ * A [TextFieldValue] holding [text] with the caret collapsed at its end.
+ *
+ * Replacing a text field's value programmatically keeps the previous
+ * selection offset, so after an autocomplete suggestion is applied the next
+ * keystroke would land mid-text. Building the value with the selection at
+ * `text.length` moves the caret to the end of the inserted text instead
+ * (issue #19).
+ */
+internal fun textFieldValueAtEnd(text: String): TextFieldValue = TextFieldValue(text = text, selection = TextRange(text.length))
+
+/**
  * Generic autocomplete text field for payees.
  */
 @Composable
@@ -347,6 +360,13 @@ fun AutocompleteTextField(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    // The field owns a TextFieldValue so it can place the caret at the end
+    // when a suggestion is applied. Re-sync if the parent replaces `value`
+    // out of band (e.g. the field is reused at a different list position).
+    var fieldValue by remember { mutableStateOf(textFieldValueAtEnd(value)) }
+    if (fieldValue.text != value) {
+        fieldValue = textFieldValueAtEnd(value)
+    }
     val currentSuggestions =
         remember(value) {
             if (value.isNotEmpty()) suggestions(value).take(5) else emptyList()
@@ -354,9 +374,10 @@ fun AutocompleteTextField(
 
     Box(modifier = modifier) {
         OutlinedTextField(
-            value = value,
+            value = fieldValue,
             onValueChange = {
-                onValueChange(it)
+                fieldValue = it
+                onValueChange(it.text)
                 expanded = true
             },
             label = { Text(label) },
@@ -373,6 +394,7 @@ fun AutocompleteTextField(
                 DropdownMenuItem(
                     text = { Text(suggestion) },
                     onClick = {
+                        fieldValue = textFieldValueAtEnd(suggestion)
                         onValueChange(suggestion)
                         expanded = false
                     },
@@ -394,6 +416,13 @@ fun AccountAutocompleteTextField(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    // The field owns a TextFieldValue so it can place the caret at the end
+    // when a suggestion is applied. Re-sync if the parent replaces `value`
+    // out of band (e.g. the field is reused at a different posting position).
+    var fieldValue by remember { mutableStateOf(textFieldValueAtEnd(value)) }
+    if (fieldValue.text != value) {
+        fieldValue = textFieldValueAtEnd(value)
+    }
     val currentSuggestions =
         remember(value) {
             if (value.isEmpty()) {
@@ -414,9 +443,10 @@ fun AccountAutocompleteTextField(
 
     Box(modifier = modifier) {
         OutlinedTextField(
-            value = value,
+            value = fieldValue,
             onValueChange = {
-                onValueChange(it)
+                fieldValue = it
+                onValueChange(it.text)
                 expanded = true
             },
             label = { Text("Account") },
@@ -437,9 +467,12 @@ fun AccountAutocompleteTextField(
                         // Check if there are deeper accounts — if so, append ":"
                         val deeper = frecencyTracker.completeAccountIncremental("$suggestion:")
                         if (deeper.isNotEmpty()) {
-                            onValueChange("$suggestion:")
+                            val next = "$suggestion:"
+                            fieldValue = textFieldValueAtEnd(next)
+                            onValueChange(next)
                             // Keep dropdown open for next level
                         } else {
+                            fieldValue = textFieldValueAtEnd(suggestion)
                             onValueChange(suggestion)
                             expanded = false
                         }
